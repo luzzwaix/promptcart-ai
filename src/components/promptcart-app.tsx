@@ -582,6 +582,14 @@ export function PromptCartApp() {
               Verified artifacts: LocusFounder business + Gemini Fulfillment Agent.
               Simulated rails: checkout and wallet settlement.
             </p>
+            <div className="judge-artifact-links" aria-label="Live Founder artifacts">
+              <a href={LOCUSFOUNDER_STOREFRONT} target="_blank" rel="noreferrer">
+                Live LocusFounder storefront <ExternalLink size={13} />
+              </a>
+              <a href={LOCUSFOUNDER_PLAN} target="_blank" rel="noreferrer">
+                Business plan PDF <ExternalLink size={13} />
+              </a>
+            </div>
           </div>
 
           <MerchantLoopScene />

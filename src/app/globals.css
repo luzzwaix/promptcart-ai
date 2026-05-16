@@ -355,6 +355,40 @@ button {
   font-weight: 800;
 }
 
+.judge-artifact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.judge-artifact-links a {
+  width: fit-content;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 55, 50, 0.14);
+  background: rgba(255, 250, 243, 0.78);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.judge-artifact-links a:hover {
+  border-color: rgba(30, 107, 99, 0.34);
+  transform: translateY(-1px);
+}
+
+.judge-artifact-links svg {
+  color: var(--teal);
+}
+
 .merchant-loop-wrap {
   display: grid;
   gap: 10px;
