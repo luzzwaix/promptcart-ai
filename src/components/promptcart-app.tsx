@@ -11,7 +11,6 @@ import {
   ChevronRight,
   CircleDollarSign,
   Download,
-  ExternalLink,
   Factory,
   FileSpreadsheet,
   Landmark,
@@ -51,17 +50,49 @@ import type {
   DeliverablePack,
   LocusSynthesisProof,
   MarginDecision,
+  ResilienceTestMode,
   SKU,
 } from "@/lib/types";
 
-const STORAGE_KEY = "promptcart-ai-demo-state";
-const STORAGE_VERSION = 8;
-const LOCUSFOUNDER_STOREFRONT =
-  "https://svc-mp5n8uzwxp69yxs2.buildwithlocus.com";
-const LOCUSFOUNDER_PLAN =
-  "https://api.locusfounder.com/api/onboarding/prospect/2c40a15b-3d32-4894-86df-8cd2333eb7ac/plan.pdf";
+const STORAGE_KEY = "marginpilot-ai-demo-state";
+const STORAGE_VERSION = 9;
 const checkoutGateway = new DemoLocusCheckoutGateway();
 const walletClient = new DemoLocusWalletClient();
+
+const PROOF_CHIPS = [
+  "Live Gemini Fulfillment Agent",
+  "ACCEPT / REPRICE / REJECT profit gate",
+  "Model fallback resilience",
+  "Buyer-ready Prospect Pack",
+  "P&L dashboard",
+];
+
+const RESILIENCE_OPTIONS: Array<{
+  id: ResilienceTestMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "normal",
+    label: "Normal run",
+    description: "Use Gemini Flash Lite as the primary fulfillment model.",
+  },
+  {
+    id: "primary-failure",
+    label: "Simulate primary model failure",
+    description: "Skip the primary model and verify fallback model continuity.",
+  },
+  {
+    id: "malformed-json",
+    label: "Simulate malformed JSON",
+    description: "Force schema recovery and route the next run to fallback.",
+  },
+  {
+    id: "no-api-key",
+    label: "Simulate no API key",
+    description: "Use deterministic local fulfillment to preserve delivery.",
+  },
+];
 
 function usePersistentPromptCartState() {
   const [state, setState] = useState<AppState>(createInitialState());
@@ -207,6 +238,8 @@ function fallbackSynthesisProof(): LocusSynthesisProof {
     mode: "demo-fallback",
     provider: "deterministic-local-agent",
     estimatedOrActualCost: "$0.00",
+    resilienceStatus: "Deterministic fallback preserved delivery",
+    resilienceTestMode: "normal",
     data: {
       agentDecision: "SHIP_PACK",
       selectedAccounts: [
@@ -288,6 +321,26 @@ export function PromptCartApp() {
     () => createMarginStressTestScenario(),
     [],
   );
+  const deliveryReceipt = useMemo(() => {
+    if (!synthesisProof || !state.order?.paymentReceipt) {
+      return null;
+    }
+
+    return {
+      buyerRequest: synthesisProof.data.buyerRequest,
+      agentDecision: synthesisProof.data.agentDecision,
+      qualityGate: synthesisProof.data.qualityGate,
+      provider: synthesisProof.provider,
+      resilienceStatus: synthesisProof.resilienceStatus,
+      selectedAccounts: synthesisProof.data.selectedAccounts,
+      simulatedOrderValue: formatCurrency(state.order.paymentReceipt.amountCents),
+      automatedProductionSpend: formatCurrency(totalSpend),
+      endingLedger: formatCurrency(state.wallet.availableBalanceCents),
+    };
+  }, [synthesisProof, state.order, state.wallet.availableBalanceCents, totalSpend]);
+  const receiptJson = deliveryReceipt
+    ? JSON.stringify(deliveryReceipt, null, 2)
+    : "";
 
   useEffect(() => {
     if (!state.fulfillmentJob || state.fulfillmentJob.status === "completed") {
@@ -382,6 +435,7 @@ export function PromptCartApp() {
           requiredGrossMargin: order.assessment.requiredGrossMargin,
           projectedGrossMargin: order.assessment.projectedGrossMargin,
         },
+        resilienceTestMode: state.resilienceTestMode,
       }),
     })
       .then((response) => response.json() as Promise<LocusSynthesisProof>)
@@ -398,6 +452,7 @@ export function PromptCartApp() {
               ...current.fulfillmentJob,
               synthesisProof: proof,
             },
+            resilienceTestMode: "normal",
           };
         });
       });
@@ -408,6 +463,7 @@ export function PromptCartApp() {
     state.founderPrompt.text,
     state.fulfillmentJob,
     state.order,
+    state.resilienceTestMode,
   ]);
 
   const handleFormBusiness = () => {
@@ -419,6 +475,7 @@ export function PromptCartApp() {
         selectedSkuId: "growth",
         order: undefined,
         fulfillmentJob: undefined,
+        resilienceTestMode: "normal",
         wallet: {
           startingBalanceCents: 4200,
           availableBalanceCents: 4200,
@@ -441,6 +498,7 @@ export function PromptCartApp() {
       setState((current) => ({
         ...current,
         order: createOrder(state.business!, selectedSku, customerEmail),
+        fulfillmentJob: undefined,
       }));
       setBusyAction(null);
     }, 360);
@@ -541,7 +599,7 @@ export function PromptCartApp() {
     return (
       <main className="app-shell loading-shell">
         <LoaderCircle className="spin" size={24} />
-        <span>Loading PromptCart AI</span>
+        <span>Loading MarginPilot AI</span>
       </main>
     );
   }
@@ -554,13 +612,13 @@ export function PromptCartApp() {
             <Orbit size={20} />
           </div>
           <div>
-            <p>PromptCart AI</p>
-            <strong>Pipeline Packs autonomous merchant</strong>
+            <p>MarginPilot AI</p>
+            <strong>Resilient merchant operations</strong>
           </div>
         </div>
 
         <div className="topbar-actions">
-          <span className="demo-chip">Checkout + wallet flow: simulated</span>
+          <span className="demo-chip">Simulated settlement + live AI fulfillment</span>
           <button className="ghost-button" onClick={resetDemo}>
             <RefreshCw size={16} />
             Reset demo
@@ -571,90 +629,56 @@ export function PromptCartApp() {
       <section className="judge-brief panel">
         <div className="judge-brief-layout">
           <div className="judge-brief-main">
-            <span>Judge brief</span>
-            <h1>One business, two layers.</h1>
+            <span>Operator brief</span>
+            <h1>AI merchant operations for productized digital services</h1>
             <p>
-              LocusFounder created Pipeline Packs. PromptCart AI operates the
-              order: merchant judgment, checkout callback, wallet math, Gemini
-              Fulfillment Agent, and a delivered Prospect Pack.
+              MarginPilot evaluates every order, protects margin, runs resilient
+              AI fulfillment, and delivers buyer-ready service assets with
+              revenue, cost, and margin visible.
             </p>
-            <p className="judge-proof-line">
-              Verified artifacts: LocusFounder business + Gemini Fulfillment Agent.
-              Simulated rails: checkout and wallet settlement.
-            </p>
-            <div className="judge-artifact-links" aria-label="Live Founder artifacts">
-              <a href={LOCUSFOUNDER_STOREFRONT} target="_blank" rel="noreferrer">
-                Live LocusFounder storefront <ExternalLink size={13} />
-              </a>
-              <a href={LOCUSFOUNDER_PLAN} target="_blank" rel="noreferrer">
-                Business plan PDF <ExternalLink size={13} />
-              </a>
+            <div className="proof-chip-row" aria-label="MarginPilot proof points">
+              {PROOF_CHIPS.map((chip) => (
+                <span key={chip}>{chip}</span>
+              ))}
             </div>
           </div>
 
           <MerchantLoopScene />
         </div>
 
-        <div className="judge-proof-grid">
-          <div className="judge-proof-card proof-live">
-            <BadgeCheck size={18} />
-            <span>Verified</span>
-            <strong>
-              LocusFounder business, storefront, plan, and build-credit usage
-            </strong>
-          </div>
-          <div className="judge-proof-card proof-live">
-            <Sparkles size={18} />
-            <span>Verified</span>
-            <strong>Gemini Fulfillment Agent decision during fulfillment</strong>
-          </div>
-          <div className="judge-proof-card proof-demo">
-            <Wallet size={18} />
-            <span>Simulated rail</span>
-            <strong>Checkout callback and wallet ledger simulation</strong>
-          </div>
-          <div className="judge-proof-card proof-note">
-            <ReceiptText size={18} />
-            <span>Payment status</span>
-            <strong>Checkout settlement is simulated; no real charge is claimed.</strong>
-          </div>
-        </div>
-
-        <div className="proof-matrix" aria-label="Submission proof matrix">
+        <div className="proof-matrix" aria-label="MarginPilot capability matrix">
           <div>
-            <span>Verified</span>
+            <span>AI/ML core</span>
             <ul>
-              <li>LocusFounder created Pipeline Packs</li>
-              <li>Live storefront exists</li>
-              <li>Business plan PDF exists</li>
-              <li>Locus platform credits were spent during build/deploy iteration</li>
-              <li>Gemini Fulfillment Agent runs live when Gemini is enabled</li>
+              <li>Gemini Fulfillment Agent runs live when configured</li>
+              <li>Fallback model and deterministic continuity preserve delivery</li>
+              <li>Structured JSON output powers the service receipt</li>
             </ul>
           </div>
           <div>
-            <span>Simulated</span>
+            <span>Commerce logic</span>
             <ul>
-              <li>Checkout settlement</li>
-              <li>Merchant wallet settlement</li>
+              <li>Profit gate supports ACCEPT / REPRICE / REJECT</li>
+              <li>Ledger tracks revenue, production spend, and retained margin</li>
             </ul>
           </div>
           <div>
-            <span>Not claimed</span>
+            <span>Scope</span>
             <ul>
-              <li>No real payment processing</li>
-              <li>No live Locus wallet settlement</li>
-              <li>No real customer revenue</li>
+              <li>Settlement is simulated for the hackathon demo</li>
+              <li>No real charge or customer revenue is claimed</li>
+              <li>Delivery assets are generated for a canonical demo order</li>
             </ul>
           </div>
         </div>
 
         <div className="judge-watch-path">
-          <span>Watch path</span>
+          <span>Demo path</span>
           <ol>
-            <li>Open the live LocusFounder storefront and business plan links.</li>
-            <li>Form the Pipeline Packs merchant blueprint.</li>
-            <li>Run the Growth Pack order and margin decision.</li>
-            <li>Finish fulfillment and verify the Gemini Fulfillment Agent decision.</li>
+            <li>Form the service merchant and review its economics.</li>
+            <li>Run the Growth Pack order through the profit gate.</li>
+            <li>Trigger simulated settlement and resilient AI fulfillment.</li>
+            <li>Inspect the delivery receipt, ledger, and retained margin.</li>
           </ol>
         </div>
       </section>
@@ -662,63 +686,69 @@ export function PromptCartApp() {
       <section className="founder-proof-grid">
         <article className="panel founder-proof-panel">
           <SectionTitle
-            icon={BadgeCheck}
-            eyebrow="Founder proof"
-            title="Created by LocusFounder Beta"
-            copy="LocusFounder generated the Pipeline Packs business artifact; PromptCart operates it through the merchant loop."
+            icon={ShieldCheck}
+            eyebrow="Resilience Lab"
+            title="Test the next fulfillment run"
+            copy="Choose a failure mode before settlement. MarginPilot will still preserve the delivery contract."
           />
-          <div className="founder-proof-list">
+          <div className="resilience-stack">
             <div>
-              <span>Business</span>
-              <strong>Pipeline Packs</strong>
-            </div>
-            <a href={LOCUSFOUNDER_STOREFRONT} target="_blank" rel="noreferrer">
-              <span>Live storefront</span>
-              <strong>
-                buildwithlocus.com <ExternalLink size={14} />
-              </strong>
-            </a>
-            <a href={LOCUSFOUNDER_PLAN} target="_blank" rel="noreferrer">
-              <span>Business plan PDF</span>
-              <strong>
-                locusfounder.com plan <ExternalLink size={14} />
-              </strong>
-            </a>
-            <div>
-              <span>Status</span>
-              <strong>LocusFounder generated business artifact</strong>
+              <span>Primary model</span>
+              <strong>gemini-2.5-flash-lite</strong>
             </div>
             <div>
-              <span>PromptCart role</span>
-              <strong>
-                Autonomous operating loop for the Founder-created business
-              </strong>
+              <span>Fallback model</span>
+              <strong>gemini-2.5-flash</strong>
             </div>
+            <div>
+              <span>Continuity fallback</span>
+              <strong>deterministic local fulfillment</strong>
+            </div>
+          </div>
+          <div className="resilience-controls">
+            {RESILIENCE_OPTIONS.map((option) => (
+              <button
+                className={
+                  state.resilienceTestMode === option.id ? "selected" : ""
+                }
+                key={option.id}
+                onClick={() =>
+                  setState((current) => ({
+                    ...current,
+                    resilienceTestMode: option.id,
+                  }))
+                }
+                disabled={!!state.fulfillmentJob && !state.fulfillmentJob.synthesisProof}
+              >
+                <strong>{option.label}</strong>
+                <span>{option.description}</span>
+              </button>
+            ))}
           </div>
         </article>
 
         <article className="panel two-part-panel">
           <SectionTitle
             icon={Orbit}
-            eyebrow="Two-part architecture"
-            title="Created by Founder, operated by PromptCart"
-            copy="The live LocusFounder artifact proves business creation; this local app proves autonomous operation without overclaiming live payments."
+            eyebrow="Operating loop"
+            title="Commercial feasibility before fulfillment"
+            copy="The system accepts only margin-safe demand, simulates settlement, fulfills with AI, and records the outcome."
           />
           <div className="architecture-steps">
             <div>
               <span>1</span>
-              <strong>LocusFounder created the business</strong>
-              <p>Business plan, landing page, SKUs, pricing, and positioning.</p>
+              <strong>Request enters</strong>
+              <p>Buyer intent is captured before the service asset is produced.</p>
             </div>
             <div>
               <span>2</span>
-              <strong>PromptCart operates the business</strong>
-              <p>Merchant judgment, checkout callback, wallet ledger, fulfillment, and continuity.</p>
+              <strong>Profit gate decides</strong>
+              <p>ACCEPT, REPRICE, or REJECT is computed before settlement opens.</p>
             </div>
             <div>
               <span>3</span>
-              <strong>Checkout/wallet scope is clear</strong>
-              <p>Simulated rails mapped to Locus primitives, not claimed as live revenue.</p>
+              <strong>Receipt closes the loop</strong>
+              <p>Delivery includes model, resilience, spend, margin, and selected accounts.</p>
             </div>
           </div>
         </article>
@@ -728,13 +758,13 @@ export function PromptCartApp() {
         <article className="panel prompt-panel">
           <SectionTitle
             icon={Sparkles}
-            eyebrow="Founder prompt"
-            title="The founder gives only intent"
-            copy="LocusFounder turned this intent into Pipeline Packs. PromptCart turns that business artifact into an operating merchant."
+            eyebrow="Service brief"
+            title="The operator gives intent"
+            copy="MarginPilot turns a service brief into sellable SKUs, margin rules, and a fulfillment-ready operating model."
           />
 
           <label className="field-label" htmlFor="founder-prompt">
-            FounderPrompt
+            Service brief
           </label>
           <textarea
             id="founder-prompt"
@@ -765,7 +795,7 @@ export function PromptCartApp() {
 
           <div className="mini-ledger">
             <Metric
-              label="Operating wallet"
+              label="Operating ledger"
               value={formatCurrency(state.wallet.availableBalanceCents)}
             />
             <Metric
@@ -779,11 +809,11 @@ export function PromptCartApp() {
         <article className="panel blueprint-panel">
           <SectionTitle
             icon={Building2}
-            eyebrow="Agent-founded business"
+            eyebrow="Service operating model"
             title={state.business?.brandName ?? "Awaiting merchant formation"}
             copy={
               state.business?.valueProposition ??
-              "The agent will found the business, publish its catalog, and declare the operating economics."
+              "The agent will shape the service offer, publish its catalog, and declare the operating economics."
             }
           />
 
@@ -794,7 +824,7 @@ export function PromptCartApp() {
                 <div>
                   <span>Merchant birth moment</span>
                   <strong>
-                    Founded from one prompt: a margin-disciplined storefront for
+                    Formed from one brief: a margin-disciplined service catalog for
                     boutique CRO agencies.
                   </strong>
                 </div>
@@ -802,7 +832,7 @@ export function PromptCartApp() {
 
               <div className="model-audit">
                 <div className="model-audit-head">
-                  <span>Founder Audit</span>
+                  <span>Model audit</span>
                   <strong>Agent compared 3 business models before launch</strong>
                 </div>
                 <div className="model-audit-list">
@@ -869,7 +899,7 @@ export function PromptCartApp() {
             <div className="empty-state">
               <PanelsTopLeft size={28} />
               <p>
-                PromptCart has the founder intent. The merchant blueprint is one
+                MarginPilot has the service intent. The merchant blueprint is one
                 decisive action away.
               </p>
             </div>
@@ -897,7 +927,7 @@ export function PromptCartApp() {
             tone="good"
           />
           <Metric
-            label="Wallet spend today"
+            label="Ledger spend today"
             value={formatCurrency(state.wallet.spentTodayCents)}
           />
           <div className="optimization-card">
@@ -917,8 +947,8 @@ export function PromptCartApp() {
                   demand.
                 </strong>
                 <p>
-                  Continuity logic stays quiet until PromptCart has an actual
-                  storefront to optimize.
+                  Continuity logic stays quiet until MarginPilot has an actual
+                  service catalog to optimize.
                 </p>
               </>
             )}
@@ -929,13 +959,13 @@ export function PromptCartApp() {
       <section className="panel storefront-section">
         <SectionTitle
           icon={LayoutGrid}
-          eyebrow="Generated storefront"
-          title="A storefront, not a slide deck"
-          copy="The agent publishes sellable SKUs, selects the flagship Growth Pack, and routes it into a real purchase decision."
+          eyebrow="Service catalog"
+          title="A sellable offer, not a research assistant"
+          copy="The agent publishes priced SKUs, selects the flagship Growth Pack, and routes it into a commercial order decision."
         />
 
         <p className="pricing-sync-note">
-          Pricing synced with LocusFounder: Starter $29, Growth $99, Scale $299.
+          Canonical service pricing: Starter $29, Growth $99, Scale $299.
         </p>
 
         <div className="sku-grid">
@@ -965,7 +995,7 @@ export function PromptCartApp() {
 
           {!state.business ? (
             <div className="sku-placeholder">
-              Form the merchant to publish its storefront.
+              Form the merchant to publish its service catalog.
             </div>
           ) : null}
         </div>
@@ -973,7 +1003,7 @@ export function PromptCartApp() {
         {selectedSku ? (
           <div className="storefront-cta">
             <div>
-              <span>Flagship checkout path</span>
+              <span>Flagship order path</span>
               <strong>
                 {selectedSku.name} · {formatCurrency(selectedSku.priceCents)}
               </strong>
@@ -999,8 +1029,8 @@ export function PromptCartApp() {
           <SectionTitle
             icon={ShieldCheck}
             eyebrow="Merchant judgment"
-            title="The agent decides whether this order deserves checkout"
-            copy="Revenue is not enough. PromptCart only sells when the quote clears its cost model and margin floor."
+            title="The agent decides whether this order deserves settlement"
+            copy="Revenue is not enough. MarginPilot only accepts demand when the quote clears its cost model and margin floor."
           />
 
           {state.order ? (
@@ -1076,12 +1106,12 @@ export function PromptCartApp() {
                   <DecisionPill decision={marginStressTest.assessment.decision} />
                   <p>
                     The same merchant would reprice this unprofitable custom
-                    order before checkout opens.{" "}
+                    order before settlement opens.{" "}
                     Reprice to{" "}
                     {formatCurrency(
                       marginStressTest.assessment.recommendedPriceCents ?? 0,
                     )}{" "}
-                    before checkout opens.
+                    before settlement opens.
                   </p>
                 </div>
               </aside>
@@ -1103,7 +1133,7 @@ export function PromptCartApp() {
                   <ChevronRight size={18} />
                 )}
                 {state.order.assessment.decision === "ACCEPT"
-                  ? "Accept order and open checkout"
+                  ? "Accept order and open settlement"
                   : state.order.assessment.decision === "REPRICE"
                     ? "Apply agent reprice"
                     : "Reject order"}
@@ -1114,7 +1144,7 @@ export function PromptCartApp() {
               <ShieldCheck size={28} />
               <p>
                 Select the Growth Pack and start an order to watch the merchant
-                protect its economics before payment.
+                protect its economics before settlement.
               </p>
             </div>
           )}
@@ -1123,15 +1153,14 @@ export function PromptCartApp() {
         <article className="panel checkout-panel">
           <SectionTitle
             icon={ReceiptText}
-            eyebrow="Locus Checkout"
-            title="Checkout opens only after ACCEPT"
-            copy="The demo uses a production-shaped Locus gateway: merchant approval first, payment callback second, fulfillment spend third."
+            eyebrow="Settlement event"
+            title="Settlement opens only after ACCEPT"
+            copy="The demo uses a simulated settlement callback: merchant approval first, order value second, production spend third."
           />
 
           <p className="checkout-limit-note">
-            Checkout settlement is simulated because Stripe Connect is
-            unavailable in Kazakhstan; Locus staff confirmed mock checkout is
-            acceptable when no real payment is claimed.
+            Settlement is simulated for this hackathon prototype; no real charge
+            or customer revenue is claimed.
           </p>
 
           <label className="field-label" htmlFor="buyer-email">
@@ -1168,20 +1197,20 @@ export function PromptCartApp() {
             </strong>
             <small>
               {state.order?.paymentReceipt
-                ? `Demo callback settled ${formatCurrency(state.order.paymentReceipt.amountCents)}`
-                : "The Locus gateway stays closed until merchant judgment approves the order."}
+                ? `Simulated callback settled ${formatCurrency(state.order.paymentReceipt.amountCents)}`
+                : "Settlement stays closed until merchant judgment approves the order."}
             </small>
           </div>
 
           <div className="locus-map">
             <div>
-              <span>Locus primitive mapping</span>
-              <strong>Production-shaped path, simulated settlement</strong>
+              <span>Operating sequence</span>
+              <strong>Profit-aware path, simulated settlement</strong>
             </div>
             <ol>
-              <li>create checkout session</li>
-              <li>checkout.session.paid callback</li>
-              <li>credit merchant wallet</li>
+              <li>create settlement session</li>
+              <li>settlement.succeeded callback</li>
+              <li>credit merchant ledger</li>
               <li>reserve fulfillment budget</li>
               <li>AI synthesis spend</li>
               <li>settle margin</li>
@@ -1203,8 +1232,8 @@ export function PromptCartApp() {
               <CircleDollarSign size={18} />
             )}
             {state.order?.paymentReceipt
-              ? "Payment callback received"
-              : "Complete demo payment callback"}
+              ? "Settlement callback received"
+              : "Complete simulated settlement"}
           </button>
         </article>
       </section>
@@ -1215,7 +1244,7 @@ export function PromptCartApp() {
             icon={Factory}
             eyebrow="Production line"
             title="The paid product is manufactured in public"
-            copy="Payment kicks off a visible production line. Each completed stage either spends money, increases quality, or unlocks delivery."
+            copy="Settlement kicks off a visible production line. Each completed stage either spends money, increases quality, or unlocks delivery."
           />
 
           <div className="progress-track">
@@ -1237,7 +1266,7 @@ export function PromptCartApp() {
             {!state.fulfillmentJob ? (
               <div className="empty-state">
                 <Boxes size={28} />
-                <p>Payment starts the five-step prospect-pack production line.</p>
+                <p>Settlement starts the five-step prospect-pack production line.</p>
               </div>
             ) : null}
           </div>
@@ -1268,9 +1297,8 @@ export function PromptCartApp() {
           </div>
 
           <p className="cost-scope-note">
-            PromptCart&apos;s $6.70 is automated production-layer spend for the demo
-            order; the LocusFounder storefront also models broader full-service
-            fulfillment overhead.
+            MarginPilot&apos;s $6.70 is automated production-layer spend for the
+            demo order, not full-service operations overhead.
           </p>
 
           <div className="wallet-flow-grid">
@@ -1293,7 +1321,7 @@ export function PromptCartApp() {
               tone="warn"
             />
             <Metric
-              label="Ending wallet"
+              label="Ending ledger"
               value={formatCurrency(state.wallet.availableBalanceCents)}
               tone="good"
             />
@@ -1339,7 +1367,7 @@ export function PromptCartApp() {
               <span>
                 {synthesisProof?.mode === "live-gemini"
                   ? "Gemini Fulfillment Agent"
-                  : "Demo fallback agent"}
+                  : "Deterministic fallback agent"}
               </span>
               <strong>
                 {synthesisProof?.provider ??
@@ -1348,10 +1376,13 @@ export function PromptCartApp() {
               {synthesisProof?.modelFallbackNote ? (
                 <em>{synthesisProof.modelFallbackNote}</em>
               ) : null}
+              {synthesisProof ? (
+                <em>{synthesisProof.resilienceStatus}</em>
+              ) : null}
               <p>
                 {synthesisProof
                   ? `${synthesisProof.data.agentDecision} - ${synthesisProof.data.qualityGate}`
-                  : "One Gemini fulfillment-agent call is attempted after payment when Gemini env vars are enabled."}
+                  : "One Gemini fulfillment-agent call is attempted after settlement when Gemini env vars are enabled."}
               </p>
               {synthesisProof ? (
                 <>
@@ -1438,6 +1469,76 @@ export function PromptCartApp() {
           </div>
         ) : null}
 
+        {deliveryReceipt ? (
+          <div className="delivery-receipt">
+            <div className="delivery-receipt-head">
+              <div>
+                <span>Delivery Receipt</span>
+                <strong>Fulfillment audit trail</strong>
+              </div>
+              <button
+                className="ghost-button"
+                onClick={() => navigator.clipboard.writeText(receiptJson)}
+              >
+                <ReceiptText size={16} />
+                Copy JSON
+              </button>
+            </div>
+            <div className="receipt-grid">
+              <Metric
+                label="Buyer request"
+                value={deliveryReceipt.buyerRequest}
+              />
+              <Metric
+                label="Agent decision"
+                value={deliveryReceipt.agentDecision}
+                tone="good"
+              />
+              <Metric
+                label="Quality gate"
+                value={deliveryReceipt.qualityGate}
+                tone="good"
+              />
+              <Metric
+                label="Provider/model"
+                value={deliveryReceipt.provider}
+              />
+              <Metric
+                label="Resilience"
+                value={deliveryReceipt.resilienceStatus}
+                tone="good"
+              />
+              <Metric
+                label="Order value"
+                value={deliveryReceipt.simulatedOrderValue}
+                tone="good"
+              />
+              <Metric
+                label="Production spend"
+                value={deliveryReceipt.automatedProductionSpend}
+                tone="warn"
+              />
+              <Metric
+                label="Ending ledger"
+                value={deliveryReceipt.endingLedger}
+                tone="good"
+              />
+            </div>
+            <div className="receipt-account-list">
+              {deliveryReceipt.selectedAccounts.slice(0, 3).map((account) => (
+                <div key={account.company}>
+                  <strong>{account.company}</strong>
+                  <span>{account.whySelected}</span>
+                </div>
+              ))}
+            </div>
+            <details className="receipt-json">
+              <summary>Receipt JSON</summary>
+              <pre>{receiptJson}</pre>
+            </details>
+          </div>
+        ) : null}
+
         <div className="deliverable-table">
           <div className="deliverable-head">
             <span>#</span>
@@ -1466,7 +1567,7 @@ export function PromptCartApp() {
             <div className="deliverable-empty">
               <PackageCheck size={28} />
               <p>
-                Complete checkout to manufacture the 10-lead client-ready pack.
+                Complete settlement to manufacture the 10-lead client-ready pack.
               </p>
             </div>
           ) : null}
@@ -1477,8 +1578,8 @@ export function PromptCartApp() {
         <SectionTitle
           icon={Banknote}
           eyebrow="Post-order continuity"
-          title="The storefront survives the sale"
-          copy="A business was founded, accepted profitable demand, funded production, delivered the asset, and remained online for the next order."
+          title="The operating loop survives the order"
+          copy="The merchant accepted profitable demand, funded production, delivered the asset, and kept its ledger positive for the next order."
         />
 
         <div className="continuity-grid">

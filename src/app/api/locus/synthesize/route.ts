@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 type AgentDecision = "SHIP_PACK" | "NEEDS_REVIEW";
+type ResilienceTestMode =
+  | "normal"
+  | "primary-failure"
+  | "malformed-json"
+  | "no-api-key";
 
 type SynthesisLead = {
   company?: string;
@@ -60,6 +65,7 @@ type RouteBody = {
     requiredGrossMargin?: number;
     projectedGrossMargin?: number;
   };
+  resilienceTestMode?: ResilienceTestMode;
 };
 
 type GeminiAgentJson = Partial<{
@@ -126,14 +132,32 @@ function fallbackSelectedAccounts(leads: SynthesisLead[]): SelectedAccount[] {
   }));
 }
 
-function deterministicFallback(body?: RouteBody) {
+function normalizedResilienceMode(value: unknown): ResilienceTestMode {
+  return value === "primary-failure" ||
+    value === "malformed-json" ||
+    value === "no-api-key"
+    ? value
+    : "normal";
+}
+
+function deterministicFallback(
+  body?: RouteBody,
+  fallbackNote = "Deterministic fallback preserved delivery",
+) {
   const leads = compactLeads(body?.leads);
   const buyerRequest = normalizedBuyerRequest(body?.buyerRequest);
+  const resilienceTestMode = normalizedResilienceMode(body?.resilienceTestMode);
 
   return NextResponse.json({
     mode: "demo-fallback",
     provider: "deterministic-local-agent",
     estimatedOrActualCost: "$0.00",
+    resilienceStatus: "Deterministic fallback preserved delivery",
+    resilienceTestMode,
+    modelFallbackNote:
+      fallbackNote === "Deterministic fallback preserved delivery"
+        ? undefined
+        : fallbackNote,
     data: {
       agentDecision: "SHIP_PACK",
       selectedAccounts: fallbackSelectedAccounts(leads),
@@ -237,9 +261,10 @@ function economicsSummary(body: RouteBody) {
 
 function buildPrompt(body: RouteBody, leads: SynthesisLead[]) {
   const buyerRequest = normalizedBuyerRequest(body.buyerRequest);
+  const resilienceTestMode = normalizedResilienceMode(body.resilienceTestMode);
 
   return [
-    "You are the PromptCart fulfillment agent for a paid B2B prospect-pack order.",
+    "You are the MarginPilot fulfillment agent for a paid productized digital-service order.",
     "Your job is to decide whether the pack can ship, select the best accounts, and write operator-ready rationale.",
     "Return only valid JSON. No markdown. No prose outside JSON.",
     'Use this exact schema: {"agent_decision":"SHIP_PACK|NEEDS_REVIEW","selected_accounts":[{"company":"...","why_selected":"...","risk":"...","outreach_opener":"..."}],"pack_summary":"...","quality_gate":"...","fit_score_rationale":"...","operator_note":"..."}',
@@ -252,6 +277,7 @@ function buildPrompt(body: RouteBody, leads: SynthesisLead[]) {
     `Buyer request: ${buyerRequest}`,
     `Founder prompt: ${capText(body.prompt, 280)}`,
     `Order economics: ${economicsSummary(body)}`,
+    `Resilience test mode: ${resilienceTestMode}`,
     `Representative lead signals: ${JSON.stringify(leads)}`,
   ].join("\n");
 }
@@ -316,25 +342,43 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   const liveEnabled = process.env.ENABLE_LIVE_GEMINI_SYNTHESIS === "true";
+  const resilienceTestMode = normalizedResilienceMode(body.resilienceTestMode);
 
-  if (!apiKey || !liveEnabled) {
+  if (!apiKey || !liveEnabled || resilienceTestMode === "no-api-key") {
     return deterministicFallback(body);
   }
 
   const leads = compactLeads(body.leads);
   const prompt = buildPrompt(body, leads);
+  const attemptedModels: string[] = [];
 
   for (const [index, model] of GEMINI_MODELS.entries()) {
     try {
+      if (index === 0 && resilienceTestMode === "primary-failure") {
+        attemptedModels.push(model);
+        throw new Error("Simulated primary model failure");
+      }
+
+      if (index === 0 && resilienceTestMode === "malformed-json") {
+        attemptedModels.push(model);
+        parseGeminiJson("{ malformed-json");
+      }
+
+      attemptedModels.push(model);
       const result = await callGemini({ apiKey, model, prompt });
       const data = parseSynthesis(result.text, body, leads);
+      const fallbackWasUsed = index === 1;
 
       return NextResponse.json({
         mode: "live-gemini",
         provider: `google/${model}`,
         estimatedOrActualCost: "usage tracked by Gemini API",
+        resilienceStatus: fallbackWasUsed
+          ? "Fallback model used"
+          : "Primary model succeeded",
+        resilienceTestMode,
         modelFallbackNote:
-          index === 1
+          fallbackWasUsed
             ? "Primary model unavailable; fallback model used."
             : undefined,
         usage: result.usage,
@@ -345,5 +389,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return deterministicFallback(body);
+  return deterministicFallback(
+    body,
+    attemptedModels.length > 0
+      ? `Attempted ${attemptedModels.map((model) => `google/${model}`).join(", ")} before deterministic fallback preserved delivery.`
+      : "Deterministic fallback preserved delivery",
+  );
 }

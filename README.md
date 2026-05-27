@@ -1,178 +1,193 @@
-# PromptCart AI
+# MarginPilot AI
 
-<p align="center">
-  <strong>LocusFounder starts the business. PromptCart AI runs it like a merchant.</strong>
-</p>
+Resilient AI merchant operations for productized digital services.
 
-<p align="center">
-  <a href="https://promptcart-ai.vercel.app"><img alt="Live App" src="https://img.shields.io/badge/live_app-promptcart--ai.vercel.app-0A0A0B"></a>
-  <a href="https://svc-mp5n8uzwxp69yxs2.buildwithlocus.com"><img alt="LocusFounder Storefront" src="https://img.shields.io/badge/LocusFounder-storefront-3A3AFF"></a>
-  <a href="https://api.locusfounder.com/api/onboarding/prospect/2c40a15b-3d32-4894-86df-8cd2333eb7ac/plan.pdf"><img alt="Business Plan" src="https://img.shields.io/badge/business_plan-PDF-176C63"></a>
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black">
-  <img alt="AI" src="https://img.shields.io/badge/AI-Gemini_Fulfillment_Agent-7C3AED">
-</p>
+## One-Line Pitch
 
-PromptCart AI demonstrates the operating loop for **Pipeline Packs**, a real LocusFounder-created business that sells evidence-backed prospect packs to boutique CRO and growth agencies.
-
-LocusFounder created the business artifact. PromptCart AI shows how that business can operate after launch: merchant judgment, simulated checkout settlement, merchant ledger accounting, AI fulfillment, delivery, and retained margin.
+MarginPilot AI evaluates incoming service orders, accepts only margin-safe demand, runs fallback-safe Gemini fulfillment, delivers a buyer-ready Prospect Pack, and leaves a receipt with revenue, cost, model, resilience, and margin visible.
 
 ## Submission Snapshot
 
-| Item | Link / Status |
+| Item | Detail |
 | --- | --- |
-| PromptCart AI live app | <https://promptcart-ai.vercel.app> |
-| LocusFounder storefront | <https://svc-mp5n8uzwxp69yxs2.buildwithlocus.com> |
-| LocusFounder business plan | <https://api.locusfounder.com/api/onboarding/prospect/2c40a15b-3d32-4894-86df-8cd2333eb7ac/plan.pdf> |
-| Repository | <https://github.com/luzzwaix/promptcart-ai> |
-| Track fit | LocusFounder-created business plus merchant operating loop |
-| AI proof | Live Gemini Fulfillment Agent when configured |
-| Payment status | Simulated checkout and wallet settlement |
+| Live app | <https://promptcart-ai.vercel.app> |
+| Repository | <https://github.com/luzzwaix/marginpilot-ai> |
+| Canonical service | Pipeline Packs prospect-intelligence Growth Pack |
+| AI proof | Gemini Fulfillment Agent with model fallback |
+| Commercial proof | ACCEPT / REPRICE / REJECT profitability gate |
+| Delivery proof | Prospect Pack preview, CSV export, and receipt JSON |
+| Ledger proof | `$42.00 + $99.00 - $6.70 = $134.30` |
 
-## Proof Stack
+## Why This Matters
 
-PromptCart AI is explicit about what is verified, what is simulated, and what is not claimed.
+Most AI service tools generate text and leave business judgment to the operator. MarginPilot focuses on the missing operating layer: before an AI agent manufactures a digital service, it checks whether the order should be accepted at all.
 
-| Layer | Status | Evidence |
-| --- | --- | --- |
-| LocusFounder business creation | Verified | Pipeline Packs storefront and business plan |
-| LocusFounder storefront deployment | Verified | Live Build with Locus URL |
-| LocusFounder business plan PDF | Verified | Public `LOCUS FOUNDER` plan artifact |
-| Locus platform credit spend | Verified | Build/deploy iteration debits in workspace history |
-| Gemini Fulfillment Agent | Live when configured | Server-side Gemini call with model fallback |
-| Checkout settlement | Simulated | Clearly labeled mock flow |
-| Merchant wallet settlement | Simulated | Implemented merchant ledger model |
-| Real payment / customer revenue | Not claimed | No processed real payment claimed |
+The result is a compact merchant loop:
 
-Stripe Connect is unavailable in Kazakhstan. Locus staff confirmed that a clearly labeled mock checkout is acceptable for Week 4 submissions when no real payment is claimed.
+- capture buyer request
+- assess price, spend, and margin floor
+- accept, reprice, or reject
+- simulate settlement
+- run resilient AI fulfillment
+- deliver the asset
+- issue an audit receipt
+- keep the ledger positive
 
-## What The Demo Proves
+## Core Loop
 
-Pipeline Packs sells finished prospect-intelligence assets, not raw databases. The LocusFounder storefront generated three commercial SKUs:
+1. The operator forms a productized service merchant.
+2. The Growth Pack SKU is priced at `$99`.
+3. MarginPilot estimates automated production spend at `$6.70`.
+4. The profit gate accepts the order because projected margin clears the `70%` floor.
+5. Simulated settlement credits the merchant ledger.
+6. Fulfillment runs discovery, signal extraction, qualification, inference, and outreach-angle generation.
+7. Gemini Fulfillment Agent produces structured shipment rationale.
+8. Delivery Receipt records buyer request, decision, quality gate, provider/model, resilience status, selected accounts, order value, spend, and ending ledger.
 
-| SKU | Price | Role |
-| --- | ---: | --- |
-| Starter | `$29` | Small test pack |
-| Growth | `$99` | Canonical demo order |
-| Scale | `$299` | Higher-volume pack |
+## AI/ML Implementation
 
-PromptCart uses the same pricing in the operating loop. The canonical demo uses the `Growth Pack`.
+The fulfillment stage makes one live Gemini call per order when configured:
+
+- primary model: `gemini-2.5-flash-lite`
+- fallback model: `gemini-2.5-flash`
+- deterministic local fallback when live AI is unavailable or intentionally disabled
+
+The server route accepts:
+
+- buyer request
+- business/service name
+- SKU name
+- representative lead signals
+- order economics context
+- resilience test mode
+
+It returns structured JSON:
+
+```json
+{
+  "agent_decision": "SHIP_PACK",
+  "selected_accounts": [
+    {
+      "company": "...",
+      "why_selected": "...",
+      "risk": "...",
+      "outreach_opener": "..."
+    }
+  ],
+  "pack_summary": "...",
+  "quality_gate": "...",
+  "fit_score_rationale": "...",
+  "operator_note": "..."
+}
+```
+
+The client uses this output to enrich the Prospect Pack, selected-account rationale, outreach opener, and Delivery Receipt.
+
+## Resilience Design
+
+MarginPilot includes a Resilience Lab for the next fulfillment run:
+
+- **Simulate primary model failure**: skips Flash Lite and verifies the fallback model path.
+- **Simulate malformed JSON**: forces schema recovery and routes to fallback.
+- **Simulate no API key**: uses deterministic local fulfillment.
+
+Statuses shown in the app:
+
+- `Primary model succeeded`
+- `Fallback model used`
+- `Deterministic fallback preserved delivery`
+
+The deterministic path returns stable `SHIP_PACK` output so the canonical demo never collapses because of quota, malformed JSON, or missing credentials.
+
+## Profitability Gate
+
+The order gate evaluates:
+
+- quoted price
+- estimated production spend
+- required gross margin floor
+- projected gross margin
+- recommended reprice when demand is underpriced
+
+Canonical economics:
+
+| Metric | Value |
+| --- | --- |
+| Starting ledger | `$42.00` |
+| Simulated order value | `$99.00` |
+| Automated production-layer spend | `$6.70` |
+| Ending ledger | `$134.30` |
+| Gross margin | about `93%` |
+
+The UI also includes a compact stress-test scenario where an underpriced custom order triggers `REPRICE`, making clear that the agent does not accept every request.
 
 ## Demo Path
 
-1. Start with LocusFounder proof: live storefront, business plan, and platform credit spend.
-2. Open PromptCart AI and review the `One business, two layers` judge brief.
-3. Confirm the SKUs are synced with the LocusFounder storefront.
-4. Select the `Growth Pack`.
-5. Edit or keep the buyer request:
+1. Open the app.
+2. Confirm the first screen is MarginPilot AI, not a Locus-first proof deck.
+3. Form the merchant.
+4. Start the Growth Pack order.
+5. Edit the buyer request if desired.
+6. Inspect the ACCEPT / REPRICE / REJECT profit gate.
+7. Complete simulated settlement.
+8. Watch fulfillment complete.
+9. Verify Gemini Fulfillment Agent and resilience status.
+10. Review the Prospect Pack and Delivery Receipt.
+11. Confirm ending ledger remains `$134.30`.
 
-   ```text
-   Find Shopify brands with checkout friction for a CRO agency targeting DTC apparel.
-   ```
+## Tech Stack
 
-6. Review merchant judgment:
-   - quoted price
-   - estimated automated production spend
-   - margin floor
-   - accept/reprice/reject logic
-7. Trigger the clearly labeled simulated checkout settlement.
-8. Watch the fulfillment pipeline run.
-9. Inspect the Gemini Fulfillment Agent decision, selected accounts, quality gate, and operator note.
-10. Review the delivered Prospect Pack and CSV export.
-11. End on the margin dashboard and next-SKU continuity state.
-
-## Canonical Economics
-
-The canonical order demonstrates merchant ledger math for the `Growth Pack`:
-
-| Metric | Value |
-| --- | ---: |
-| Starting wallet | `$42.00` |
-| Simulated payment inflow | `+$99.00` |
-| Automated production-layer spend | `-$6.70` |
-| Ending wallet | `$134.30` |
-| Gross margin | `~93%` |
-
-`$6.70` represents the automated production layer in the PromptCart demo. The LocusFounder storefront also models broader full-service fulfillment overhead.
-
-## Gemini Fulfillment Agent
-
-PromptCart includes one live AI fulfillment step when environment variables are configured.
-
-The agent receives:
-
-- buyer request
-- business and SKU context
-- representative lead data
-- founder prompt
-- order economics
-
-It returns:
-
-- `SHIP_PACK` or `NEEDS_REVIEW`
-- selected accounts
-- pack summary
-- quality gate
-- fit-score rationale
-- outreach opener
-- operator note
-
-Reliability path:
-
-1. Try `gemini-2.5-flash-lite`.
-2. If it fails, try `gemini-2.5-flash`.
-3. If both fail, use deterministic fallback output so the demo remains stable.
-
-The API key is server-side only and is never exposed to the client.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  A["LocusFounder"] --> B["Pipeline Packs storefront"]
-  B --> C["PromptCart operating loop"]
-  C --> D["Merchant judgment"]
-  D --> E["Simulated checkout settlement"]
-  E --> F["Merchant ledger"]
-  F --> G["Gemini Fulfillment Agent"]
-  G --> H["Prospect Pack"]
-  H --> I["Margin dashboard"]
-```
+- Next.js App Router
+- TypeScript
+- React
+- Tailwind CSS
+- Three.js operating-loop visual
+- Server route for Gemini Fulfillment Agent
+- Local persistent demo state
+- Adapter-shaped simulated settlement and ledger clients
 
 Key files:
 
 | File | Purpose |
 | --- | --- |
-| `src/components/promptcart-app.tsx` | Main operating-loop UI |
-| `src/components/merchant-loop-scene.tsx` | Three.js merchant-loop visual |
-| `src/lib/business-engine.ts` | Pricing, profitability, fulfillment, and ledger logic |
-| `src/lib/locus-adapters.ts` | Simulated checkout and wallet rails |
-| `src/lib/types.ts` | Domain model |
+| `src/components/promptcart-app.tsx` | Main operating UI and canonical flow |
+| `src/components/merchant-loop-scene.tsx` | Three.js merchant operating loop |
 | `src/app/api/locus/synthesize/route.ts` | Gemini Fulfillment Agent route |
+| `src/lib/business-engine.ts` | SKU, profitability, fulfillment, ledger, and deliverable logic |
+| `src/lib/locus-adapters.ts` | Simulated settlement and ledger adapters |
+| `src/lib/types.ts` | Domain types |
 
-Core domain concepts include `BusinessBlueprint`, `SKU`, `Order`, `ProfitabilityAssessment`, `FulfillmentJob`, `SpendEvent`, `ProspectLead`, `DeliverablePack`, `LocusCheckoutGateway`, and `LocusWalletClient`.
+## What Is Live
 
-The app persists demo state with a versioned local-storage envelope so the judging flow remains replayable.
+- The deployed Next.js app.
+- The server-side Gemini Fulfillment Agent when `GEMINI_API_KEY` and `ENABLE_LIVE_GEMINI_SYNTHESIS=true` are configured.
+- The fallback-chain behavior and deterministic continuity path.
+- The full browser-based canonical Growth Pack flow.
+
+## What Is Simulated
+
+- Checkout/settlement callback.
+- Merchant ledger settlement.
+- Customer payment.
+- Revenue collection.
+
+These are simulated intentionally so the project can demonstrate commercial operating logic without claiming live payment processing.
 
 ## What We Do Not Claim
 
-PromptCart AI does **not** claim:
+MarginPilot AI does not claim:
 
-- processed real payments
-- live Locus Checkout settlement
-- live Locus wallet settlement
+- real payment processing
 - real customer revenue
-- production-ready autonomous commerce
-- real-time prospect scraping
+- live bank/wallet settlement
+- production financial compliance
+- fully autonomous operation with no human review ever needed
 
-The checkout and wallet rails are simulated, but shaped around the same sequence a live integration would need:
+This is an operating-loop prototype designed to prove AI/ML resilience, profitability logic, and deliverable quality.
 
-1. merchant profitability decision
-2. checkout session
-3. paid callback
-4. merchant ledger credit
-5. fulfillment budget reserve
-6. AI production spend
-7. margin settlement
+## Prior Origin
+
+This project began as a Locus Week 4 experiment around an agent-operated storefront. The current submission reframes the useful core as a standalone DevNetwork AI + ML Hackathon project: resilient AI merchant operations for productized digital services.
 
 ## Run Locally
 
@@ -181,10 +196,10 @@ npm install
 npm run dev
 ```
 
-Optional live Gemini fulfillment:
+Live Gemini fulfillment requires:
 
 ```bash
-GEMINI_API_KEY=your_key
+GEMINI_API_KEY=...
 ENABLE_LIVE_GEMINI_SYNTHESIS=true
 ```
 
@@ -194,7 +209,3 @@ Verification:
 npm run lint
 npm run build
 ```
-
-## Judge Takeaway
-
-PromptCart AI is a clear operating-loop prototype for a real LocusFounder-created business: a merchant that evaluates unit economics, accepts profitable demand, routes settlement through simulated rails, uses a live Gemini Fulfillment Agent, delivers a paid digital asset, and shows retained margin.

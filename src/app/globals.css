@@ -330,9 +330,9 @@ button {
 
 .judge-brief-main h1 {
   margin: 0;
-  max-width: 12ch;
-  font-size: clamp(2.25rem, 5vw, 5.6rem);
-  line-height: 0.92;
+  max-width: 17ch;
+  font-size: clamp(2.35rem, 4.4vw, 4.9rem);
+  line-height: 0.96;
   letter-spacing: 0;
 }
 
@@ -353,6 +353,29 @@ button {
   color: var(--teal-dark) !important;
   font-size: 0.94rem !important;
   font-weight: 800;
+}
+
+.proof-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 64ch;
+}
+
+.judge-brief-main .proof-chip-row span {
+  width: fit-content;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 107, 99, 0.16);
+  background: rgba(30, 107, 99, 0.07);
+  color: var(--teal-dark);
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .judge-artifact-links {
@@ -685,12 +708,15 @@ input:focus {
 .formation-banner,
 .formation-catalog,
 .founder-proof-list > *,
+.resilience-stack > div,
+.resilience-controls button,
 .architecture-steps > div,
 .model-audit,
 .wallet-card,
 .decision-branches,
 .decision-hero,
 .deliverable-toolbar,
+.delivery-receipt,
 .continuity-strip {
   border-radius: var(--radius);
   border: 1px solid var(--line);
@@ -730,12 +756,15 @@ input:focus {
 }
 
 .founder-proof-list,
+.resilience-stack,
+.resilience-controls,
 .architecture-steps {
   display: grid;
   gap: 10px;
 }
 
 .founder-proof-list > *,
+.resilience-stack > div,
 .architecture-steps > div {
   min-height: 72px;
   display: grid;
@@ -747,6 +776,7 @@ input:focus {
 }
 
 .founder-proof-list span,
+.resilience-stack span,
 .architecture-steps span {
   color: var(--muted);
   font-size: 0.71rem;
@@ -760,6 +790,51 @@ input:focus {
   align-items: center;
   gap: 6px;
   line-height: 1.4;
+}
+
+.resilience-stack {
+  margin-bottom: 12px;
+}
+
+.resilience-controls {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resilience-controls button {
+  min-height: 92px;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  color: var(--ink);
+  text-align: left;
+  padding: 14px;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.resilience-controls button:hover {
+  border-color: rgba(30, 107, 99, 0.3);
+  transform: translateY(-1px);
+}
+
+.resilience-controls button.selected {
+  border-color: rgba(30, 107, 99, 0.42);
+  background: rgba(30, 107, 99, 0.09);
+}
+
+.resilience-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+  transform: none;
+}
+
+.resilience-controls span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .founder-proof-list a {
@@ -1552,6 +1627,90 @@ input:focus {
   line-height: 1.4;
 }
 
+.delivery-receipt {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border-color: rgba(30, 107, 99, 0.16);
+  background:
+    linear-gradient(180deg, rgba(30, 107, 99, 0.06), rgba(255, 255, 255, 0.58));
+}
+
+.delivery-receipt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.delivery-receipt-head > div {
+  display: grid;
+  gap: 4px;
+}
+
+.delivery-receipt-head span,
+.receipt-json summary {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.receipt-grid .metric:first-child,
+.receipt-grid .metric:nth-child(3) {
+  grid-column: span 2;
+}
+
+.receipt-account-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.receipt-account-list > div {
+  display: grid;
+  gap: 6px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.62);
+  padding: 12px;
+}
+
+.receipt-account-list span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.receipt-json {
+  border-radius: var(--radius);
+  border: 1px solid rgba(46, 55, 50, 0.12);
+  background: rgba(24, 31, 28, 0.04);
+  padding: 12px;
+}
+
+.receipt-json summary {
+  cursor: pointer;
+}
+
+.receipt-json pre {
+  max-height: 280px;
+  overflow: auto;
+  margin: 12px 0 0;
+  color: var(--ink);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .deliverable-table {
   border-radius: var(--radius);
   border: 1px solid var(--line);
@@ -1681,6 +1840,8 @@ input:focus {
   .sku-grid,
   .agent-account-list,
   .agent-deliverable-strip,
+  .receipt-grid,
+  .receipt-account-list,
   .ledger-summary,
   .wallet-flow-grid,
   .deliverable-summary,
@@ -1763,6 +1924,22 @@ input:focus {
   .judge-proof-line {
     width: 100%;
     border-radius: var(--radius);
+  }
+
+  .resilience-controls,
+  .receipt-grid,
+  .receipt-account-list {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-grid .metric:first-child,
+  .receipt-grid .metric:nth-child(3) {
+    grid-column: auto;
+  }
+
+  .delivery-receipt-head {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .merchant-loop-scene {

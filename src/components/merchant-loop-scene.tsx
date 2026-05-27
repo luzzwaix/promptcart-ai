@@ -11,34 +11,29 @@ type LoopNode = {
 
 const LOOP_NODES: LoopNode[] = [
   {
-    label: "Founder",
+    label: "Request",
     kind: "live",
     position: new THREE.Vector3(-3.4, 1.28, 0.08),
   },
   {
-    label: "Storefront",
+    label: "Profit Gate",
     kind: "live",
     position: new THREE.Vector3(-1.25, 2.0, 0.22),
   },
   {
-    label: "Checkout",
+    label: "Checkout Event",
     kind: "demo",
     position: new THREE.Vector3(1.55, 1.56, 0.16),
   },
   {
-    label: "Wallet",
+    label: "AI Fulfillment",
     kind: "demo",
     position: new THREE.Vector3(3.35, 0.26, -0.04),
   },
   {
-    label: "Gemini",
+    label: "Delivery Receipt",
     kind: "ai",
     position: new THREE.Vector3(1.82, -1.28, -0.18),
-  },
-  {
-    label: "Pack",
-    kind: "live",
-    position: new THREE.Vector3(-0.96, -1.98, -0.1),
   },
   {
     label: "Margin",
@@ -55,12 +50,11 @@ const NODE_COLORS = {
 };
 
 const LABEL_OFFSETS: Record<string, { x: number; y: number }> = {
-  Founder: { x: -0.1, y: -0.62 },
-  Storefront: { x: 0, y: 0.42 },
-  Checkout: { x: 0.06, y: 0.58 },
-  Wallet: { x: -0.06, y: 0.58 },
-  Gemini: { x: 0.08, y: -0.56 },
-  Pack: { x: 0, y: 0.58 },
+  Request: { x: -0.1, y: -0.62 },
+  "Profit Gate": { x: 0, y: 0.42 },
+  "Checkout Event": { x: 0.06, y: 0.58 },
+  "AI Fulfillment": { x: -0.06, y: 0.58 },
+  "Delivery Receipt": { x: -0.12, y: -0.56 },
   Margin: { x: -0.1, y: -0.56 },
 };
 
@@ -438,8 +432,8 @@ export function MerchantLoopScene() {
         <canvas ref={canvasRef} />
       </div>
       <p className="merchant-loop-note">
-        LocusFounder creates the business. PromptCart routes the order through
-        judgment, settlement, fulfillment, and margin.
+        MarginPilot routes each request through profit judgment, simulated
+        settlement, AI fulfillment, delivery receipt, and retained margin.
       </p>
     </div>
   );

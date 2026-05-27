@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PromptCart AI | Pipeline Packs",
+  title: "MarginPilot AI",
   description:
-    "An autonomous merchant that forms from a prompt, sells a profitable order, funds digital fulfillment, and keeps operating.",
+    "Resilient AI merchant operations for productized digital services with profit-aware order acceptance and fallback-safe fulfillment.",
 };
 
 export default function RootLayout({

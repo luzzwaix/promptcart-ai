@@ -2,6 +2,12 @@ export type MarginDecision = "ACCEPT" | "REPRICE" | "REJECT";
 
 export type CheckoutMode = "demo" | "live";
 
+export type ResilienceTestMode =
+  | "normal"
+  | "primary-failure"
+  | "malformed-json"
+  | "no-api-key";
+
 export interface FounderPrompt {
   id: string;
   text: string;
@@ -109,6 +115,11 @@ export interface LocusSynthesisProof {
   mode: "live-gemini" | "demo-fallback";
   provider: string;
   estimatedOrActualCost: string;
+  resilienceStatus:
+    | "Primary model succeeded"
+    | "Fallback model used"
+    | "Deterministic fallback preserved delivery";
+  resilienceTestMode?: ResilienceTestMode;
   modelFallbackNote?: string;
   usage?: {
     input_tokens?: number;
@@ -188,6 +199,7 @@ export interface WalletSnapshot {
 export interface AppState {
   founderPrompt: FounderPrompt;
   buyerRequest: string;
+  resilienceTestMode: ResilienceTestMode;
   business?: BusinessBlueprint;
   selectedSkuId?: string;
   order?: Order;

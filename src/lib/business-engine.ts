@@ -390,6 +390,7 @@ export function createInitialState(): AppState {
   return {
     founderPrompt: createFounderPrompt(),
     buyerRequest: DEFAULT_BUYER_REQUEST,
+    resilienceTestMode: "normal",
     wallet: {
       startingBalanceCents: 4200,
       availableBalanceCents: 4200,
