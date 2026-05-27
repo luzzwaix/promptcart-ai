@@ -10,7 +10,7 @@ MarginPilot AI evaluates incoming service orders, accepts only margin-safe deman
 
 | Item | Detail |
 | --- | --- |
-| Live app | <https://promptcart-ai.vercel.app> |
+| Live app | <https://marginpilot-ai.vercel.app> |
 | Repository | <https://github.com/luzzwaix/marginpilot-ai> |
 | Canonical service | Pipeline Packs prospect-intelligence Growth Pack |
 | AI proof | Gemini Fulfillment Agent with model fallback |
